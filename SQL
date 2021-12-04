@@ -1,0 +1,100 @@
+
+/*Question 2: LIST EACH DEPARTMENT AND THE NUMBER OF COURSES IT OFFERS. CORRECT.*/
+SELECT dept.NAME AS 'Dept Name',
+COUNT(c.deptid) AS '# of Courses'
+FROM department AS dept
+JOIN course AS c 
+ON dept.id = c.deptid 
+GROUP BY 1 ORDER BY 2;
+
+/*Question 3: lIST EACH COURSE AND THE NUMBER OF STUDENTS. CORRECT.*/
+SELECT c.NAME AS 'Course Name',
+COUNT(sc.studentid) AS 'Number of Students'
+FROM course AS c
+JOIN studentcourse AS sc
+ON c.id = sc.courseid
+GROUP BY 1 desc ORDER BY 2 desc, c.name;
+
+/*Question 4: LIST COURSES WITHOUT FACULTY. CORRECT*/
+SELECT NAME FROM course AS c
+WHERE NOT EXISTS
+(SELECT courseid FROM facultycourse AS fc
+WHERE fc.courseid = c.id);
+
+/*Question 5: LIST NUMBER OF STUDENTS IN COURSES WITHOUT FACULTY. CORRECT*/
+SELECT ALL c.name, COUNT(DISTINCT sc.studentid) FROM course AS c
+JOIN studentcourse AS sc
+ON c.id = sc.courseid
+WHERE NOT EXISTS
+(SELECT courseid FROM facultycourse AS fc
+WHERE fc.courseid = c.id)
+GROUP BY 1 ORDER BY 2 desc;
+
+/*Question 6: lIST TOTAL # OF STUDENTS ENROLLED EACH YEAR. CORRECT.*/
+SELECT count(distinct studentid) AS 'Students', YEAR(startdate) AS 'Year' 
+FROM studentcourse
+GROUP BY 2 ORDER BY 1;
+
+/*Question 7: LIST # OF STUDENTS ENROLLED IN AUGUST OF EACH YEAR. CORRECT.*/
+SELECT startdate, COUNT(DISTINCT studentid) FROM studentcourse
+GROUP BY startdate
+HAVING MONTH(startdate) = 8;
+
+
+/qt 8:- SELECT s.firstname AS `First Name`, s.lastname AS `Last Name`, (SELECT ROUND(AVG(sc.progress), 1)
+FROM studentcourse sc
+WHERE s.id=sc.studentId) `Average Num Progress`
+FROM student s
+INNER JOIN studentcourse sc ON sc.studentId= s.id
+GROUP BY s.id
+HAVING `Average Num Progress`>50
+ORDER BY `Average Num Progress` DESC,`First Name`,`Last Name`;
+
+/*Question 9: LIST NAME AND AVG OF STUDENTS WITH LESS THAN 50%. CORRECT BUT CAN'T SORT.*/
+SELECT DISTINCT sc.studentid, s.firstname, s.lastname, ROUND(AVG(sc.progress),1) FROM studentcourse AS sc
+JOIN student AS s
+ON sc.studentid = s.id
+GROUP BY sc.studentid, s.firstname, s.lastname
+HAVING AVG(sc.progress) < 50 
+ORDER BY AVG(sc.progress) desc;
+
+/*Question 10: LIST COURSE NAME AND STUDENTS AVG.*/
+SELECT DISTINCT c.name AS 'Course', ROUND(AVG(sc.progress),1) AS 'Avg Progress' FROM course AS c
+JOIN studentcourse AS sc ON c.id = sc.courseid
+GROUP BY c.name ORDER BY AVG(sc.progress) desc;
+
+/*Question 13: LIST FACULTY AVERAGE IF > 90% OF MAX COURSE AVG.*/
+SELECT f.firstname AS `First Name`,f.lastname AS `Last Name`, ROUND(AVG(sc.progress),1) AS `Average Progress`
+FROM studentcourse sc
+INNER JOIN facultycourse fc ON fc.courseId=sc.courseId
+INNER JOIN faculty f ON fc.facultyId=f.id
+GROUP BY fc.facultyId
+HAVING AVG(sc.progress)>=((SELECT  max(avg_prg)*0.9
+FROM (select courseId, avg(progress) AS avg_prg
+   from studentcourse sc
+   group by courseId) As maxprg))
+ORDER BY `Average progress` DESC,`First Name` ASC,`Last Name` ASC;
+
+/*Question 14: LIST MIN & MAX GRADES.*/
+SELECT s.firstname AS `First Name`,s.lastname AS `Last Name`,
+CASE 
+WHEN MIN(sc.progress)<40 THEN 'F'
+WHEN MIN(sc.progress)<50 THEN 'D'
+WHEN MIN(sc.progress)<60 THEN 'C'
+WHEN MIN(sc.progress)<70 THEN 'B'
+WHEN MIN(sc.progress)>=70 THEN 'A'END AS `Minimum Grade`, 
+CASE 
+WHEN MAX(sc.progress)<40 THEN 'F'
+WHEN MAX(sc.progress)<50 THEN 'D'
+WHEN MAX(sc.progress)<60 THEN 'C'
+WHEN MAX(sc.progress)<70 THEN 'B'
+WHEN MAX(sc.progress)>=70 THEN 'A'  END AS `Maximum Grade`
+FROM studentcourse sc
+INNER JOIN student s ON s.id=sc.studentId
+GROUP BY sc.studentId
+ORDER BY `Minimum Grade` DESC,`Maximum Grade` DESC,`First Name`,`Last Name`;
+
+SELECT s.firstname AS 'First', s.lastname AS 'Last', MIN(sc.progress) AS 'Min Score', MAX(sc.progress) AS 'Max Score'
+FROM student AS s JOIN studentcourse AS sc
+ON s.id = sc.studentid
+GROUP BY s.firstname, s.lastname ORDER BY MIN(sc.progress) DESC, MAX(sc.progress) DESC;
